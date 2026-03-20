@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Turing Machine Simulator</title>
+  <meta name="description" content="Interactive Turing Machine simulator with tape visualization, presets, rule editor, and step-by-step execution." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="background-orb orb-1"></div>
+  <div class="background-orb orb-2"></div>
+
+  <div class="app-shell">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">Theory of Computation • Deployable Static Website</p>
+        <h1>Turing Machine Simulator</h1>
+        <p class="subtitle">
+          Build and test Turing Machines with a visual tape, live transition highlighting,
+          execution history, configurable run speed, and built-in examples such as unary increment,
+          binary increment, palindrome checking, and parity testing.
+        </p>
+      </div>
+      <div class="hero-actions">
+        <button id="loadPresetBtn" class="btn btn-primary">Load Selected Preset</button>
+        <button id="initializeBtnTop" class="btn btn-secondary">Initialize</button>
+      </div>
+    </header>
+
+    <main class="grid-layout">
+      <section class="panel controls-panel">
+        <div class="panel-header">
+          <h2>Machine Setup</h2>
+          <span class="badge">Config</span>
+        </div>
+
+        <div class="preset-bar">
+          <label>
+            Preset Machine
+            <select id="presetSelect">
+              <option value="unaryIncrement">Unary Increment</option>
+              <option value="binaryIncrement">Binary Increment</option>
+              <option value="palindromeAB">Palindrome Checker (a/b)</option>
+              <option value="evenZeros">Even Number of 0s</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="form-grid">
+          <label>
+            Input String
+            <input id="inputString" type="text" value="111" placeholder="Example: 111 or abba" />
+          </label>
+          <label>
+            Blank Symbol
+            <input id="blankSymbol" type="text" maxlength="1" value="_" />
+          </label>
+          <label>
+            Start State
+            <input id="startState" type="text" value="q0" />
+          </label>
+          <label>
+            Accept State
+            <input id="acceptState" type="text" value="qa" />
+          </label>
+          <label>
+            Reject State
+            <input id="rejectState" type="text" value="qr" />
+          </label>
+          <label>
+            Max Steps
+            <input id="maxSteps" type="number" min="1" value="200" />
+          </label>
+          <label>
+            Tape Padding
+            <input id="tapePadding" type="number" min="2" max="25" value="6" />
+          </label>
+          <label>
+            Run Speed (ms)
+            <input id="runSpeed" type="range" min="120" max="1200" step="20" value="420" />
+            <span class="range-value" id="runSpeedValue">420 ms</span>
+          </label>
+        </div>
+
+        <div class="button-row top-gap">
+          <button id="initializeBtn" class="btn btn-primary">Initialize Tape</button>
+          <button id="resetBtn" class="btn btn-secondary">Reset</button>
+          <button id="clearRulesBtn" class="btn btn-danger">Clear Rules</button>
+        </div>
+
+        <div class="button-row top-gap compact-row">
+          <button id="exportBtn" class="btn btn-secondary">Export JSON</button>
+          <label class="btn btn-secondary file-label" for="importFile">Import JSON</label>
+          <input id="importFile" type="file" accept="application/json" hidden />
+          <button id="copyRulesBtn" class="btn btn-secondary">Copy Rules</button>
+        </div>
+
+        <div class="info-card top-gap">
+          <h3>Built-in examples</h3>
+          <ul>
+            <li><strong>Unary Increment:</strong> appends one more <code>1</code>.</li>
+            <li><strong>Binary Increment:</strong> adds 1 to a binary number.</li>
+            <li><strong>Palindrome Checker:</strong> accepts strings like <code>abba</code> or <code>aba</code>.</li>
+            <li><strong>Even Number of 0s:</strong> accepts binary strings with an even count of zeroes.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="panel rules-panel">
+        <div class="panel-header">
+          <h2>Transition Rules</h2>
+          <span class="badge">δ(q, a)</span>
+        </div>
+
+        <div class="rule-editor">
+          <input id="ruleState" type="text" placeholder="Current State" />
+          <input id="ruleRead" type="text" maxlength="1" placeholder="Read" />
+          <input id="ruleWrite" type="text" maxlength="1" placeholder="Write" />
+          <select id="ruleMove">
+            <option value="R">Move Right</option>
+            <option value="L">Move Left</option>
+            <option value="S">Stay</option>
+          </select>
+          <input id="ruleNextState" type="text" placeholder="Next State" />
+          <button id="addRuleBtn" class="btn btn-primary">Add Rule</button>
+        </div>
+
+        <div class="table-toolbar">
+          <input id="ruleSearch" type="text" placeholder="Search rules by state or symbol" />
+          <div class="mini-stats">
+            <span id="ruleCount">0 rules</span>
+            <span id="alphabetDisplay">Alphabet: -</span>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Current</th>
+                <th>Read</th>
+                <th>Write</th>
+                <th>Move</th>
+                <th>Next</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="rulesTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel tape-panel">
+        <div class="panel-header">
+          <h2>Tape Visualization</h2>
+          <span class="badge">Runtime</span>
+        </div>
+
+        <div class="status-strip">
+          <div><span>Status</span><strong id="machineStatus">Not initialized</strong></div>
+          <div><span>Current State</span><strong id="currentStateDisplay">-</strong></div>
+          <div><span>Head Position</span><strong id="headPositionDisplay">-</strong></div>
+          <div><span>Read Symbol</span><strong id="currentSymbolDisplay">-</strong></div>
+          <div><span>Steps</span><strong id="stepCountDisplay">0</strong></div>
+          <div><span>Next Rule</span><strong id="nextRuleDisplay">-</strong></div>
+        </div>
+
+        <div class="tape-toolbar">
+          <button id="centerHeadBtn" class="btn btn-secondary btn-small">Center on Head</button>
+          <button id="expandTapeBtn" class="btn btn-secondary btn-small">More Tape</button>
+          <button id="shrinkTapeBtn" class="btn btn-secondary btn-small">Less Tape</button>
+        </div>
+
+        <div id="tapeContainer" class="tape-container"></div>
+
+        <div class="button-row top-gap">
+          <button id="stepBtn" class="btn btn-primary">Step</button>
+          <button id="runBtn" class="btn btn-primary">Run</button>
+          <button id="pauseBtn" class="btn btn-secondary">Pause</button>
+          <button id="jumpToEndBtn" class="btn btn-secondary">Run to Halt</button>
+        </div>
+      </section>
+
+      <section class="panel diagram-panel">
+        <div class="panel-header">
+          <h2>Transition Overview</h2>
+          <span class="badge">Active rule highlighted</span>
+        </div>
+        <div id="transitionCards" class="transition-cards"></div>
+      </section>
+
+      <section class="panel log-panel">
+        <div class="panel-header">
+          <h2>Execution Log</h2>
+          <span class="badge">Step-by-step</span>
+        </div>
+        <div id="logOutput" class="log-output"></div>
+      </section>
+
+      <section class="panel summary-panel">
+        <div class="panel-header">
+          <h2>Machine Summary</h2>
+          <span class="badge">Analysis</span>
+        </div>
+        <div class="summary-grid">
+          <div class="summary-box">
+            <span>Total Rules</span>
+            <strong id="summaryRules">0</strong>
+          </div>
+          <div class="summary-box">
+            <span>Visited States</span>
+            <strong id="summaryVisited">0</strong>
+          </div>
+          <div class="summary-box">
+            <span>Tape Span</span>
+            <strong id="summarySpan">0</strong>
+          </div>
+          <div class="summary-box">
+            <span>Halt Outcome</span>
+            <strong id="summaryOutcome">Pending</strong>
+          </div>
+        </div>
+        <div class="shortcut-card">
+          <h3>Keyboard shortcuts</h3>
+          <p><kbd>I</kbd> initialize &nbsp; <kbd>S</kbd> step &nbsp; <kbd>R</kbd> run/pause &nbsp; <kbd>L</kbd> load preset</p>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <template id="ruleRowTemplate">
+    <tr>
+      <td class="rule-current"></td>
+      <td class="rule-read"></td>
+      <td class="rule-write"></td>
+      <td class="rule-move"></td>
+      <td class="rule-next"></td>
+      <td><button class="btn btn-small btn-danger delete-rule">Delete</button></td>
+    </tr>
+  </template>
+
+  <script src="script.js"></script>
+</body>
+</html>
